@@ -1,2 +1,3 @@
-# Didi-Indexing-Bot
- A indexing bot for telegram
+# Didi Indexing Bot
+
+An indexing bot for telegram, WIP
