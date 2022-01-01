@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": ""
+    },
+    "DidiIndexingBot - ImportResult": {
+      "commandName": "Project",
+      "commandLineArgs": "\"../../../../Database/messageDB.db\" \"result.json\""
+    },
+    "DidiIndexingBot": {
+      "commandName": "Project"
+    }
+  }
+}
