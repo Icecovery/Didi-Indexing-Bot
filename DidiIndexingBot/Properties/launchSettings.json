@@ -10,7 +10,8 @@
       "commandLineArgs": "\"../../../../Database/messageDB.db\" \"result.json\""
     },
     "DidiIndexingBot": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "\"../../../../Database/messageDB.db\""
     }
   }
 }
