@@ -21,8 +21,8 @@ namespace DidiIndexingBot.RecordImporter
 
 			// command 
 
-			SqliteCommand command = connection.CreateCommand();
-			command.CommandText =
+			SqliteCommand insertMessageCommand = connection.CreateCommand();
+			insertMessageCommand.CommandText =
 			@"
 				INSERT INTO messages (id, date, from_name, from_id, text, reply_to_message_id, forwarded_from)
 				VALUES ($id, $date, $from_name, $from_id, $text, $reply_to_message_id, $forwarded_from);
@@ -30,33 +30,33 @@ namespace DidiIndexingBot.RecordImporter
 
 			// parameters
 
-			SqliteParameter parameter_id = command.CreateParameter();
+			SqliteParameter parameter_id = insertMessageCommand.CreateParameter();
 			parameter_id.ParameterName = "$id";
-			command.Parameters.Add(parameter_id);
+			insertMessageCommand.Parameters.Add(parameter_id);
 
-			SqliteParameter parameter_date = command.CreateParameter();
+			SqliteParameter parameter_date = insertMessageCommand.CreateParameter();
 			parameter_date.ParameterName = "$date";
-			command.Parameters.Add(parameter_date);
+			insertMessageCommand.Parameters.Add(parameter_date);
 
-			SqliteParameter parameter_from_name = command.CreateParameter();
+			SqliteParameter parameter_from_name = insertMessageCommand.CreateParameter();
 			parameter_from_name.ParameterName = "$from_name";
-			command.Parameters.Add(parameter_from_name);
+			insertMessageCommand.Parameters.Add(parameter_from_name);
 
-			SqliteParameter parameter_from_id = command.CreateParameter();
+			SqliteParameter parameter_from_id = insertMessageCommand.CreateParameter();
 			parameter_from_id.ParameterName = "$from_id";
-			command.Parameters.Add(parameter_from_id);
+			insertMessageCommand.Parameters.Add(parameter_from_id);
 
-			SqliteParameter parameter_text = command.CreateParameter();
+			SqliteParameter parameter_text = insertMessageCommand.CreateParameter();
 			parameter_text.ParameterName = "$text";
-			command.Parameters.Add(parameter_text);
+			insertMessageCommand.Parameters.Add(parameter_text);
 
-			SqliteParameter parameter_reply_to_message_id = command.CreateParameter();
+			SqliteParameter parameter_reply_to_message_id = insertMessageCommand.CreateParameter();
 			parameter_reply_to_message_id.ParameterName = "$reply_to_message_id";
-			command.Parameters.Add(parameter_reply_to_message_id);
+			insertMessageCommand.Parameters.Add(parameter_reply_to_message_id);
 
-			SqliteParameter parameter_forwarded_from = command.CreateParameter();
+			SqliteParameter parameter_forwarded_from = insertMessageCommand.CreateParameter();
 			parameter_forwarded_from.ParameterName = "$forwarded_from";
-			command.Parameters.Add(parameter_forwarded_from);
+			insertMessageCommand.Parameters.Add(parameter_forwarded_from);
 
 			// fill in commands
 
@@ -72,19 +72,19 @@ namespace DidiIndexingBot.RecordImporter
 					}
 
 					parameter_id.Value = msg.id.ToString();
-					parameter_date.Value = msg.date.ToString();
-					parameter_from_name.Value = msg.from ?? "deleted account";
+					parameter_date.Value = msg.date.ToString("s");
+					parameter_from_name.Value = msg.from ?? "[deleted account]";
 					parameter_from_id.Value = msg.from_id.Replace("user", "").Replace("channel", "");
 					parameter_text.Value = GetMsgText(msg);
 					parameter_reply_to_message_id.Value = msg.reply_to_message_id.ToString();
 					parameter_forwarded_from.Value = msg.forwarded_from ?? string.Empty;
 					try
 					{
-						command.ExecuteNonQuery();
+						insertMessageCommand.ExecuteNonQuery();
 					}
 					catch (Exception)
 					{
-						Console.WriteLine("ERROR on message " + msg.id.ToString());
+						Console.Error.WriteLine($"ERROR on message {msg.id}");
 						throw;
 					}
 
@@ -92,7 +92,22 @@ namespace DidiIndexingBot.RecordImporter
 				}
 			}
 
+			// fts5 search
+
+			Console.Write("Creating fts5 table...");
+
+			SqliteCommand fts5InsertAllCommand = connection.CreateCommand();
+			fts5InsertAllCommand.CommandText =
+			@"
+				INSERT INTO search SELECT id, text FROM messages;
+			";
+
+			fts5InsertAllCommand.ExecuteNonQuery();
+
+			Console.WriteLine("Done");
+
 			transaction.Commit();
+			connection.Close();
 			Console.WriteLine($"\nTotal entries: {counter}");
 		}
 
@@ -124,7 +139,7 @@ namespace DidiIndexingBot.RecordImporter
 				}
 				else if (msg.poll != null)
 				{
-					StringBuilder sb = new StringBuilder();
+					StringBuilder sb = new();
 					sb.AppendLine($"[Poll {msg.poll.question}]");
 					sb.AppendLine($"[Total Voters {msg.poll.total_voters}]");
 					foreach (Answer answer in msg.poll.answers)

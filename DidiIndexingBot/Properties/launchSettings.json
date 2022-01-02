@@ -7,7 +7,7 @@
     },
     "DidiIndexingBot - ImportResult": {
       "commandName": "Project",
-      "commandLineArgs": "\"../../../../Database/messageDB.db\" \"result.json\""
+      "commandLineArgs": "\"../../../../Database/messageDB.db\" \"../../../../Database/result.json\""
     },
     "DidiIndexingBot": {
       "commandName": "Project",

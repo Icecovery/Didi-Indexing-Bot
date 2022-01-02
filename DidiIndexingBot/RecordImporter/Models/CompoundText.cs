@@ -13,7 +13,7 @@ namespace DidiIndexingBot.RecordImporter.Models
 			{
 				try
 				{
-					StringBuilder sb = new StringBuilder();
+					StringBuilder sb = new();
 					CompoundText text = JsonSerializer.Deserialize<CompoundText>($"{{\"elements\": {input}}}");
 					foreach (object element in text.elements)
 					{
