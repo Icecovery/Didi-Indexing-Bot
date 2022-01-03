@@ -45,8 +45,16 @@ namespace DidiIndexingBot
 		public static readonly IConfigurationRoot secret = new ConfigurationBuilder().AddUserSecrets(typeof(Program).Assembly).Build();
 		private static readonly TelegramBotClient Bot = new(secret["botAPIKey"]);
 		private static readonly Regex isAlphanumeric = new("^[a-zA-Z0-9]*$");
+		private static DateTime whoSaidLastCallTime = DateTime.MinValue;
 
-		private static DateTime lastWhoSaid = DateTime.MinValue;
+		#region Constants
+		private const int whoSaidQuestionSearchAttempt = 100;
+		private const int whoSaidTextMinimumLength = 8;
+		private const int whoSaidAnswerSearchAttempt = 20;
+		private const int whoSaidWrongAnswerCount = 4;
+		private const int whoSaidCoolDown = 60;
+		private const int randomMessageSearchAttempt = 10;
+		#endregion
 
 		/// <summary>
 		/// Main program entry point
@@ -437,8 +445,14 @@ namespace DidiIndexingBot
 			LogWithTime($"Sending debug message");
 
 			StringBuilder sb = new();
-			sb.AppendLine("<b>Debug Message</b>");
-			sb.AppendLine("If you can see this message, the bot can see you and has access to the Internet.");
+			sb.AppendLine($"<b>Debug Message</b>");
+			sb.AppendLine($"If you can see this message, the bot can see you and has access to the Internet.");
+			sb.AppendLine($"whoSaidQuestionSearchAttempt: {whoSaidQuestionSearchAttempt}");
+			sb.AppendLine($"whoSaidAnswerSearchAttempt: {whoSaidAnswerSearchAttempt}");
+			sb.AppendLine($"whoSaidCoolDown: {whoSaidCoolDown}");
+			sb.AppendLine($"whoSaidTextMinimumLength: {whoSaidTextMinimumLength}");
+			sb.AppendLine($"whoSaidWrongAnswerCount: {whoSaidWrongAnswerCount}");
+			sb.AppendLine($"randomMessageSearchAttempt: {randomMessageSearchAttempt}");
 			// add more debug message here
 
 			await Bot.SendTextMessageAsync(message.Chat.Id, sb.ToString(), replyToMessageId: message.MessageId, parseMode: ParseMode.Html, cancellationToken: cancellationToken);
@@ -457,7 +471,7 @@ namespace DidiIndexingBot
 			Random r = new();
 			MessageEntry? entry = null;
 
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < randomMessageSearchAttempt; i++)
 			{
 				long targetId = r.NextInt64(0, message.MessageId);
 				entry = await SearchDatabase(targetId);
@@ -483,27 +497,28 @@ namespace DidiIndexingBot
 		/// <returns></returns>
 		private static async Task HandleWhoSaid(Message message, CancellationToken cancellationToken)
 		{
-			if ((DateTime.Now - lastWhoSaid).TotalSeconds < 60)
+			if ((DateTime.Now - whoSaidLastCallTime).TotalSeconds < whoSaidCoolDown)
 				return;
 
-			lastWhoSaid = DateTime.Now;
+			whoSaidLastCallTime = DateTime.Now;
 
 			LogWithTime($"Sending who said message");
 
 			Random r = new(message.MessageId);
 			MessageEntry? entry = null;
 
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < whoSaidQuestionSearchAttempt; i++)
 			{
 				long targetId = r.NextInt64(0, message.MessageId);
 				entry = await SearchDatabase(targetId);
 
 				if (!entry.HasValue
 					|| !string.IsNullOrEmpty(entry.Value.forwarded_from)
-					|| entry.Value.text.Length < 6
+					|| entry.Value.text.Length < whoSaidTextMinimumLength
 					|| entry.Value.text.StartsWith('[')
 					|| entry.Value.text.StartsWith('/')
-					|| entry.Value.from_name == "[deleted Account]")
+					|| entry.Value.text.StartsWith('@')
+					|| entry.Value.from_name == "[deleted account]")
 				{
 					//LogWithTime($"Fail because {(entry != null ? entry.Value.text : $"No Value at {targetId}")}");
 					entry = null;
@@ -523,10 +538,10 @@ namespace DidiIndexingBot
 
 			int tries = 0;
 
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < whoSaidWrongAnswerCount; i++)
 			{
 				tries++;
-				if (tries >= 20)
+				if (tries >= whoSaidAnswerSearchAttempt)
 				{
 					await Bot.SendTextMessageAsync(message.Chat.Id, "Failed to generate enough answer at this time, please try again.", replyToMessageId: message.MessageId, cancellationToken: cancellationToken);
 					return;
@@ -544,10 +559,17 @@ namespace DidiIndexingBot
 				options.Add(optionEntry.Value.from_name);
 			}
 
-			int correct = r.Next(0, 4);
+			int correct = r.Next(0, whoSaidWrongAnswerCount);
 			options.Insert(correct, entry.Value.from_name);
 
-			Message question = await Bot.SendTextMessageAsync(message.Chat.Id, $"<code>Who said this?\nRemember to give an emoji reaction to this question!</code>\n\n{entry.Value.ToWhoSaidString()}\n\n<code>Answer in the quiz below. Cooldown started: 60s</code>", parseMode: ParseMode.Html, replyToMessageId: message.MessageId, cancellationToken: cancellationToken);
+			Message question = await Bot.SendTextMessageAsync(message.Chat.Id, 
+				$"<code>Who said this?</code>\n" +
+				$"\n" +
+				$"{entry.Value.ToWhoSaidString()}\n" +
+				$"\n" +
+				$"<code>Answer in the quiz below. Cooldown: {whoSaidCoolDown}s\n" +
+				$"If you find this quiz interesting, please 👍 it!</code>", 
+				parseMode: ParseMode.Html, replyToMessageId: message.MessageId, cancellationToken: cancellationToken);
 
 			await Bot.SendPollAsync(
 				chatId: message.Chat.Id, 
@@ -557,7 +579,7 @@ namespace DidiIndexingBot
 				type: PollType.Quiz,
 				options: options,
 				correctOptionId: correct,
-				openPeriod: 60,
+				openPeriod: whoSaidCoolDown,
 				isAnonymous: false,
 				replyToMessageId: question.MessageId,
 				cancellationToken: cancellationToken);
