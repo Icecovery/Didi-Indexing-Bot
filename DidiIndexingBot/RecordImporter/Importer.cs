@@ -71,11 +71,15 @@ namespace DidiIndexingBot.RecordImporter
 						Console.Write($"\r{msg.id} - {counter} ");
 					}
 
+					string msgText = GetMsgText(msg);
+					if (msgText.StartsWith("/search"))
+						continue; // don't record search command query
+
 					parameter_id.Value = msg.id.ToString();
 					parameter_date.Value = msg.date.ToString("s");
 					parameter_from_name.Value = msg.from ?? "[deleted account]";
 					parameter_from_id.Value = msg.from_id.Replace("user", "").Replace("channel", "");
-					parameter_text.Value = GetMsgText(msg);
+					parameter_text.Value = msgText;
 					parameter_reply_to_message_id.Value = msg.reply_to_message_id.ToString();
 					parameter_forwarded_from.Value = msg.forwarded_from ?? string.Empty;
 					try

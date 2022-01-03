@@ -171,6 +171,7 @@ namespace DidiIndexingBot
 						if (message.Text.StartsWith("/search"))
 						{
 							await HandleSearchCommand(message, cancellationToken);
+							return; // don't record search command query
 						}
 						if (message.Text.StartsWith("/viewarchive"))
 						{
