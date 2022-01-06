@@ -40,7 +40,7 @@ namespace DidiIndexingBot
 	public static class Program
 	{
 		private static readonly string BotName = "@didiIndexingBot";
-		private static readonly string buildID = "Build 2022-01-02-01";
+		private static readonly string buildID = "Build 2022-01-05-01";
 		private static SqliteConnection connection;
 		public static readonly IConfigurationRoot secret = new ConfigurationBuilder().AddUserSecrets(typeof(Program).Assembly).Build();
 		private static readonly TelegramBotClient Bot = new(secret["botAPIKey"]);
@@ -79,7 +79,7 @@ namespace DidiIndexingBot
 			//Boot
 			Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"==================================");
-            Console.WriteLine($"||Indexing Bot V0.1 Telegram ed.||");
+            Console.WriteLine($"||Indexing Bot V1.0 Telegram ed.||");
             Console.WriteLine($"||      {buildID}     ||");
             Console.WriteLine($"==================================");
 			Console.Write($"[{DateTime.Now}] Booting.");
@@ -266,7 +266,7 @@ namespace DidiIndexingBot
 					";
 
 					insertMessageCommand.Parameters.AddWithValue("$id", entry.id);
-					insertMessageCommand.Parameters.AddWithValue("$date", entry.date);
+					insertMessageCommand.Parameters.AddWithValue("$date", entry.date.ToString("s"));
 					insertMessageCommand.Parameters.AddWithValue("$from_name", entry.from_name);
 					insertMessageCommand.Parameters.AddWithValue("$from_id", entry.from_id);
 					insertMessageCommand.Parameters.AddWithValue("$text", entry.text);

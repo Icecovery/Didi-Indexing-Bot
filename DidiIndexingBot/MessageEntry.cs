@@ -52,7 +52,8 @@ namespace DidiIndexingBot
 			sb.AppendLine($"<code>D/T:</code> {date:s}");
 
 			// uid
-			sb.AppendLine($"<code>UID:</code> <a href=\"tg://user?id={from_id}\">{from_id}</a> ");
+			sb.AppendLine($"<code>UID:</code> {from_id}"); // avoid mentioning user
+			//sb.AppendLine($"<code>UID:</code> <a href=\"tg://user?id={from_id}\">{from_id}</a> ");
 
 			// message id
 			sb.AppendLine($"<code>MID:</code> <a href=\"https://t.me/c/{groupURL}/{id}\">{id}</a>");
