@@ -40,7 +40,7 @@ namespace DidiIndexingBot
 	public static class Program
 	{
 		private static readonly string BotName = "@didiIndexingBot";
-		private static readonly string buildID = "Build 2022-01-05-01";
+		private static readonly string buildID = "Build 2022-01-06-01";
 		private static SqliteConnection connection;
 		public static readonly IConfigurationRoot secret = new ConfigurationBuilder().AddUserSecrets(typeof(Program).Assembly).Build();
 		private static readonly TelegramBotClient Bot = new(secret["botAPIKey"]);
@@ -243,7 +243,12 @@ namespace DidiIndexingBot
 					case MessageType.Dice:
 						text = $"[Dice {message.Dice.Emoji} value={message.Dice.Value}]";
 						break;
-				}			
+				}
+
+				if (message.Caption != null)
+				{
+					text += $"\n{message.Caption}";
+				}
 
 				try
 				{
