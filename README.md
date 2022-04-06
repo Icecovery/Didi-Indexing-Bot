@@ -29,7 +29,7 @@ An indexing and archiving bot for telegram
 	* set `From` to `the oldest message`
 	* set `To` to `present`
 
-6. Run the bot with `dotnet DidiIndexingBot[.dll|.exe] {databaseFilePath} {jsonRecordPath}` to import message arhive, in which:
+6. Run the bot with `dotnet DidiIndexingBot[.dll|.exe] {databaseFilePath} {jsonRecordPath}` to import message archive, in which:
 	* `databaseFilePath` is the SQLite database file, use `Database/emptyDB.db` as a template or you can use the commands in the SQL command section to create your own database
 	* `jsonRecordPath` is the `result.json` you just exported from Telegram
 	* Noted that both parameters use relative path ONLY
